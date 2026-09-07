@@ -23,6 +23,7 @@ jobs:
 
       - name: Generate synthetic dataset (small sample for CI)
         run: |
+         mkdir -p data
           cd data
           python generate_dataset.py --n-users 300 --n-transactions 8000 --fraud-rate 0.02
 
