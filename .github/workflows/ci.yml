@@ -15,22 +15,17 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: "pip"
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
       - name: Generate synthetic dataset (small sample for CI)
-        run: |
-         mkdir -p data
-          cd data
-          python generate_dataset.py --n-users 300 --n-transactions 8000 --fraud-rate 0.02
+        run: python data/generate_dataset.py --n-users 300 --n-transactions 8000 --fraud-rate 0.02
 
       - name: Train models
-        run: |
-          cd src
-          python train.py --transactions ../data/transactions.csv --features-out ../data/feature_table.parquet --model-dir ../models
+        run: python src/train.py --transactions data/transactions.csv --features-out data/feature_table.parquet --model-dir models
 
       - name: Run tests
         run: pytest tests/ -v
