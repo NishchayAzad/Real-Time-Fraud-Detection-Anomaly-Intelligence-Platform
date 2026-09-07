@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+streaming/live_scores.db
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# Keep the trained models and a sample of data in the repo so the project runs
+# out of the box for a reviewer, but ignore the full 260k-row raw CSV to keep
+# the repo lightweight -- regenerate it with data/generate_dataset.py.
+data/transactions.csv
+data/feature_table.parquet

@@ -1,0 +1,28 @@
+# Minimal stack: the scoring API only. This is enough to run the whole demo
+# (API + streaming/simulator.py + dashboard/app.py can all run on the host and
+# talk to this container over localhost:8000).
+#
+# The commented-out `redis` and `kafka` services below show how this would be
+# productionized: UserStateStore backed by Redis (so state survives restarts and
+# is shared across multiple API replicas), and a Kafka topic feeding a consumer
+# group of scoring workers instead of the asyncio simulator. Left commented so
+# the project runs with zero extra infra for a demo/interview, while still
+# documenting the intended production topology.
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # redis:
+  #   image: redis:7-alpine
+  #   ports: ["6379:6379"]
+  #
+  # kafka:
+  #   image: redpandadata/redpanda:latest
+  #   ports: ["9092:9092"]

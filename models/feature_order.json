@@ -1,0 +1,1 @@
+["amount", "hour", "day_of_week", "is_weekend", "is_late_night", "time_since_prev_txn_min", "txns_last_10min", "txns_last_1h", "txns_last_24h", "user_avg_amount", "amount_over_user_avg", "amount_zscore", "is_new_device", "is_new_country", "is_channel_switch"]
