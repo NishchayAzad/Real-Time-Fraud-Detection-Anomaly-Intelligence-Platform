@@ -20,6 +20,8 @@ rules for guaranteed coverage of known hard constraints, blended into one number
 full reason-code transparency (SHAP for the ML part, plain logic for the rules part).
 """
 from dataclasses import dataclass, asdict
+from pathlib import Path
+import json
 import numpy as np
 
 WEIGHTS = {
@@ -33,6 +35,26 @@ DECISION_THRESHOLDS = {
     "FLAG": 0.45,
     # below FLAG -> ALLOW
 }
+
+_CALIBRATION_PATH = Path(__file__).resolve().parent.parent / "models" / "anomaly_calibration.json"
+_calibration_cache = None
+
+
+def load_anomaly_calibration() -> dict:
+    """Loads the Isolation Forest score calibration computed at training time
+    (see train.py::calibrate_anomaly_scores). Falls back to a permissive default
+    if the file is missing, so this never hard-crashes serving -- but a missing
+    calibration file means anomaly scores are uncalibrated and should be treated
+    as unreliable until models are retrained."""
+    global _calibration_cache
+    if _calibration_cache is not None:
+        return _calibration_cache
+    if _CALIBRATION_PATH.exists():
+        with open(_CALIBRATION_PATH) as f:
+            _calibration_cache = json.load(f)
+    else:
+        _calibration_cache = {"p50": -0.5, "p99": -0.2}
+    return _calibration_cache
 
 
 @dataclass
@@ -88,11 +110,29 @@ def rule_heuristic_score(features: dict) -> tuple[float, list]:
     return min(score, 1.0), reasons
 
 
-def normalize_anomaly_score(raw_score: float) -> float:
-    """IsolationForest.score_samples returns roughly [-0.5, 0.5]; higher (less negative)
-    = more normal. We flip and squash to [0, 1] where 1 = most anomalous."""
-    anomaly = -raw_score  # now higher = more anomalous
-    return float(1 / (1 + np.exp(-8 * (anomaly - 0.05))))  # logistic squashing, centered
+def normalize_anomaly_score(raw_score: float, calibration: dict | None = None) -> float:
+    """Maps a raw IsolationForest.score_samples value (higher = more normal) to a
+    [0, 1] anomaly score, calibrated against the ACTUAL distribution of scores on
+    legitimate training data -- not an assumed fixed center.
+
+    calibration['p50'] = median anomaly level ("-score_samples") for legit data
+                          -> maps to ~0 (typical legit transaction)
+    calibration['p99'] = 99th percentile anomaly level for legit data
+                          -> maps to ~1 (as anomalous as the most unusual 1% of
+                             legit traffic ever gets; genuine fraud typically
+                             sits well beyond this)
+
+    Everything between is linearly interpolated and clipped to [0, 1]. This
+    means the score is directly interpretable as "how far into the unusual
+    tail of normal behavior is this, relative to what normal actually looks
+    like" rather than an arbitrarily-centered sigmoid.
+    """
+    if calibration is None:
+        calibration = load_anomaly_calibration()
+    anomaly = -raw_score  # higher = more anomalous
+    p50, p99 = calibration["p50"], calibration["p99"]
+    span = max(p99 - p50, 1e-6)
+    return float(np.clip((anomaly - p50) / span, 0.0, 1.0))
 
 
 def score_transaction(features: dict, xgb_model, iso_model, feature_order) -> RiskResult:

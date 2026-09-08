@@ -111,6 +111,19 @@ def main(args):
     iso_ap = average_precision_score(y_val, anomaly_scores_val)
     print(f"\n=== Isolation Forest (unsupervised) ===\nPR-AUC (as anomaly ranker): {iso_ap:.4f}")
 
+    # Calibrate the raw anomaly score against the ACTUAL legit-data distribution
+    # (see src/risk_engine.py::normalize_anomaly_score for why this matters: an
+    # assumed fixed center produced a badly miscalibrated score that saturated
+    # near 1.0 for almost every transaction, legit or not).
+    anomaly_scores_legit_train = -iso_model.score_samples(X_train_legit)
+    calibration = {
+        "p50": float(np.percentile(anomaly_scores_legit_train, 50)),
+        "p99": float(np.percentile(anomaly_scores_legit_train, 99)),
+    }
+    with open(args.model_dir + "/anomaly_calibration.json", "w") as f:
+        json.dump(calibration, f, indent=2)
+    print(f"Anomaly score calibration (from legit training data): {calibration}")
+
     joblib.dump(xgb_model, args.model_dir + "/xgb_model.joblib")
     joblib.dump(iso_model, args.model_dir + "/iso_forest.joblib")
     with open(args.model_dir + "/feature_order.json", "w") as f:

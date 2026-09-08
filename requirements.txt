@@ -14,3 +14,6 @@ shap==0.46.0
 streamlit==1.41.1
 httpx==0.28.1
 pytest==8.3.4
+
+# dev-only: used by docs/generate_readme_charts.py, not required to run the app
+matplotlib==3.9.0
