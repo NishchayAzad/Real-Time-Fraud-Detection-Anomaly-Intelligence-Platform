@@ -12,8 +12,10 @@ Built on a **self-generated, multi-channel synthetic transaction dataset** — e
 every fraud pattern is something I designed and can explain, rather than an anonymized
 Kaggle CSV with columns like `V1...V28`.
 
-**🔴 Live demo:** _[API](#) · [Dashboard](#)_ — see [Deploying it live](#deploying-it-live) below
-to stand these up yourself for free in ~10 minutes.
+**🟢 Live demo:** [API docs](https://real-time-fraud-detection-anomaly.onrender.com/docs) ·
+[Live dashboard](https://real-time-fraud-detection-anomaly-intelligence-platform-krtus8.streamlit.app/)
+— free-tier hosting, so the API may take 30–60s to wake up on the first request. In the
+dashboard, click **Start** to begin streaming simulated transactions through the live model.
 
 ---
 
