@@ -278,13 +278,23 @@ minutes — genuinely useful for a resume link, not just local instructions.
    *Free tier note: the service sleeps after inactivity and takes ~30–60s to wake on the
    first request — mention this if a reviewer tries it cold.*
 
-**2. Deploy the dashboard on [Streamlit Community Cloud](https://streamlit.io/cloud) (free):**
+2. **Deploy the dashboard on [Streamlit Community Cloud](https://streamlit.io/cloud) (free):**
 1. Sign in with GitHub → **New app** → select this repo, branch `main`, file
    `dashboard/app.py`.
-2. Under **Advanced settings → Secrets**, nothing is required, but you can optionally set
+2. **Before clicking Deploy**, expand **"Advanced settings"** and set **Python version to
+   3.12**. This step matters:
+
+   > `runtime.txt` is unreliable on Streamlit Community Cloud (confirmed by multiple open
+   > issues in their own repo — it's frequently ignored in favor of whatever the platform's
+   > current default is, e.g. Python 3.13). This project pins `numpy<2` (required for `shap`
+   > compatibility — see the calibration note above), which doesn't ship wheels for Python
+   > 3.13, so the version must be selected explicitly at deploy time. If you already deployed
+   > without setting this, delete the app and redeploy — Python version can't be changed on
+   > an existing deployment.
+3. Under **Advanced settings → Secrets**, nothing is required, but you can optionally set
    `FRAUD_API_URL = "https://your-app.onrender.com"` as an environment variable so the
    dashboard defaults to your deployed API instead of `localhost`.
-3. Deploy. In the running app's sidebar, confirm/paste your Render URL into
+4. Deploy. In the running app's sidebar, confirm/paste your Render URL into
    **Scoring API URL**, click **Start**, and watch live-scored transactions stream in.
 
 Once both are live, update the **🔴 Live demo** links at the top of this README.
